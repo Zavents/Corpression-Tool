@@ -14,6 +14,7 @@ export default function App() {
   const [originalSize, setOriginalSize] = useState(null);
   const canvasRef = useRef(null);
   const originalImageRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -32,56 +33,81 @@ export default function App() {
     }
   };
 
+  const handleImageDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      const img = new Image();
+      img.onload = () => {
+        originalImageRef.current = img;
+        setOriginalSize((file.size / 1024).toFixed(2));
+        setImage(img);
+      };
+      img.src = URL.createObjectURL(file);
+    }
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+
   useEffect(() => {
     if (image && canvasRef.current) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
-      
+
       canvas.width = image.width;
       canvas.height = image.height;
-      
+
       ctx.drawImage(image, 0, 0);
-      
+
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
-      
+
       for (let i = 0; i < data.length; i += 4) {
         let r = data[i];
         let g = data[i + 1];
         let b = data[i + 2];
-        
+
         // Temperature (Warmer: +R, -B)
         r += temperature;
         b -= temperature;
         // Tint (Green/Magenta: +G)
         g += tint;
-        
+
         // Brightness
         r += brightness;
         g += brightness;
         b += brightness;
-        
+
         // Contrast
         const contrastFactor = (259 * (contrast + 255)) / (255 * (259 - contrast));
         r = contrastFactor * (r - 128) + 128;
         g = contrastFactor * (g - 128) + 128;
         b = contrastFactor * (b - 128) + 128;
-        
+
         // Saturation
         const gray = 0.2989 * r + 0.5870 * g + 0.1140 * b;
         const satFactor = (saturation + 100) / 100;
         r = gray + (r - gray) * satFactor;
         g = gray + (g - gray) * satFactor;
         b = gray + (b - gray) * satFactor;
-        
+
         // Clamp values
         data[i] = Math.max(0, Math.min(255, r));
         data[i + 1] = Math.max(0, Math.min(255, g));
         data[i + 2] = Math.max(0, Math.min(255, b));
       }
-      
+
       ctx.putImageData(imageData, 0, 0);
-      
+
       canvas.toBlob((blob) => {
         if (blob) {
           setFileSize((blob.size / 1024).toFixed(2));
@@ -127,21 +153,24 @@ export default function App() {
     <div className="app-main">
       <div className="app-container">
         <h1>Color Correction & Compression Tool</h1>
-        
+
         {!image ? (
-          <div className="upload-container-wrapper"> 
-            <label className="upload-label">
-              
+          <div className="upload-container-wrapper">
+            <label className="upload-label"
+              onDrop={handleImageDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}>
+
               <Upload className="upload-icon" />
-              
+
               <span className="upload-title">Drag & Drop or</span>
-              
+
               <span className="upload-action-text">
                 Click to Upload Image
               </span>
-              
+
               <span className="upload-hint-text">JPEG or PNG, Max 5MB</span>
-              
+
               <input
                 type="file"
                 accept="image/*"
@@ -154,9 +183,9 @@ export default function App() {
           <div className="app-grid">
             <div className="panel adjustments-panel">
               <h2 className="panel-title">Adjustments & Compression</h2>
-              
+
               <div className="adjustments-space">
-                
+
                 {/* Temperature */}
                 <div>
                   <label className="adjustment-label">
@@ -251,7 +280,7 @@ export default function App() {
                     <span>Smaller File (Low Quality)</span>
                     <span>Larger File (Best Quality)</span>
                   </div>
-                  
+
                   {/* File Size Stats */}
                   {originalSize && fileSize && (
                     <div className="stats-box">
