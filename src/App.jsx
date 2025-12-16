@@ -26,6 +26,10 @@ export default function App() {
   const applyColorCorrection = useCallback((imageData) => {
     const data = imageData.data;
     
+    // Pre-calculate factors outside the loop for better performance
+    const contrastFactor = contrast !== 0 ? (259 * (contrast + 255)) / (255 * (259 - contrast)) : null;
+    const satFactor = saturation !== 0 ? (saturation + 100) / 100 : null;
+    
     for (let i = 0; i < data.length; i += 4) {
       let r = data[i];
       let g = data[i + 1];
@@ -44,17 +48,15 @@ export default function App() {
       b += brightness;
 
       // Contrast
-      if (contrast !== 0) {
-        const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-        r = factor * (r - 128) + 128;
-        g = factor * (g - 128) + 128;
-        b = factor * (b - 128) + 128;
+      if (contrastFactor !== null) {
+        r = contrastFactor * (r - 128) + 128;
+        g = contrastFactor * (g - 128) + 128;
+        b = contrastFactor * (b - 128) + 128;
       }
 
       // Saturation
-      if (saturation !== 0) {
+      if (satFactor !== null) {
         const gray = 0.2989 * r + 0.5870 * g + 0.1140 * b;
-        const satFactor = (saturation + 100) / 100;
         r = gray + (r - gray) * satFactor;
         g = gray + (g - gray) * satFactor;
         b = gray + (b - gray) * satFactor;
