@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Upload, Download, RotateCcw, ArrowLeft } from 'lucide-react';
 import { parseGIF, decompressFrames } from 'gifuct-js';
 import GIF from 'gif.js';
-import './App.css'; // Your CSS file
+import './App.css';
 
 export default function App() {
   const [image, setImage] = useState(null);
@@ -14,9 +14,6 @@ export default function App() {
   const [quality, setQuality] = useState(90);
   const [fileSize, setFileSize] = useState(null);
   const [originalSize, setOriginalSize] = useState(null);
-  const [isAnimated, setIsAnimated] = useState(false);
-  const [frames, setFrames] = useState([]);
-  const [outputFormat, setOutputFormat] = useState('jpeg');
   const [isAnimated, setIsAnimated] = useState(false);
   const [frames, setFrames] = useState([]);
   const [outputFormat, setOutputFormat] = useState('jpeg');
@@ -138,7 +135,9 @@ export default function App() {
       const mimeType = outputFormat === 'webp' ? 'image/webp' : outputFormat === 'png' ? 'image/png' : 'image/jpeg';
       const qualityValue = outputFormat === 'png' ? undefined : quality / 100;
       canvasRef.current.toBlob((blob) => {
-        if (blob) setFileSize((blob.size / 1024).toFixed(2));
+        if (blob) {
+          setFileSize((blob.size / 1024).toFixed(2));
+        }
       }, mimeType, qualityValue);
     }
   }, [outputFormat, quality]);
@@ -176,7 +175,9 @@ export default function App() {
     }
   };
 
-  const handleDragOver = (e) => e.preventDefault();
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
 
   useEffect(() => {
     if (isAnimated && frames.length > 0 && canvasRef.current) {
@@ -196,13 +197,14 @@ export default function App() {
       };
       animate();
       return () => {
-        if (animationFrameRef.current) clearTimeout(animationFrameRef.current);
+        if (animationFrameRef.current) {
+          clearTimeout(animationFrameRef.current);
+        }
       };
     }
   }, [isAnimated, frames, applyColorCorrection]);
 
   useEffect(() => {
-    if (image && !isAnimated && canvasRef.current) {
     if (image && !isAnimated && canvasRef.current) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
@@ -222,7 +224,9 @@ export default function App() {
     setOriginalSize(null);
     setIsAnimated(false);
     setFrames([]);
-    if (animationFrameRef.current) clearTimeout(animationFrameRef.current);
+    if (animationFrameRef.current) {
+      clearTimeout(animationFrameRef.current);
+    }
   };
 
   const handleReset = () => {
@@ -267,25 +271,21 @@ export default function App() {
   };
 
   const downloadAsIco = async (canvas) => {
-    // Create a properly sized canvas (ICO standard sizes: 16, 32, 48, 256)
-    const size = 256; // Using 256x256 for best quality
+    const size = 256;
     const icoCanvas = document.createElement('canvas');
     icoCanvas.width = size;
     icoCanvas.height = size;
     const ctx = icoCanvas.getContext('2d');
     
-    // Draw image centered and scaled
     const scale = Math.min(size / canvas.width, size / canvas.height);
     const x = (size - canvas.width * scale) / 2;
     const y = (size - canvas.height * scale) / 2;
     ctx.drawImage(canvas, x, y, canvas.width * scale, canvas.height * scale);
     
-    // Get PNG data
     const pngBlob = await new Promise(resolve => icoCanvas.toBlob(resolve, 'image/png'));
     const pngArrayBuffer = await pngBlob.arrayBuffer();
     const pngData = new Uint8Array(pngArrayBuffer);
     
-    // Create ICO file structure
     const icoData = createICO(pngData, size);
     const blob = new Blob([icoData], { type: 'image/x-icon' });
     const url = URL.createObjectURL(blob);
@@ -298,26 +298,23 @@ export default function App() {
 
   const createICO = (pngData, size) => {
     const pngSize = pngData.length;
-    const icoSize = 6 + 16 + pngSize; // Header(6) + Directory(16) + PNG data
+    const icoSize = 6 + 16 + pngSize;
     const ico = new Uint8Array(icoSize);
     const view = new DataView(ico.buffer);
     
-    // ICO Header (6 bytes)
-    view.setUint16(0, 0, true);        // Reserved (0)
-    view.setUint16(2, 1, true);        // Type (1 = ICO)
-    view.setUint16(4, 1, true);        // Number of images (1)
+    view.setUint16(0, 0, true);
+    view.setUint16(2, 1, true);
+    view.setUint16(4, 1, true);
     
-    // Image Directory (16 bytes)
-    ico[6] = size === 256 ? 0 : size;  // Width (0 means 256)
-    ico[7] = size === 256 ? 0 : size;  // Height (0 means 256)
-    ico[8] = 0;                         // Color palette (0 = no palette)
-    ico[9] = 0;                         // Reserved
-    view.setUint16(10, 1, true);       // Color planes
-    view.setUint16(12, 32, true);      // Bits per pixel
-    view.setUint32(14, pngSize, true); // Image size
-    view.setUint32(18, 22, true);      // Image offset (6 + 16)
+    ico[6] = size === 256 ? 0 : size;
+    ico[7] = size === 256 ? 0 : size;
+    ico[8] = 0;
+    ico[9] = 0;
+    view.setUint16(10, 1, true);
+    view.setUint16(12, 32, true);
+    view.setUint32(14, pngSize, true);
+    view.setUint32(18, 22, true);
     
-    // PNG data
     ico.set(pngData, 22);
     
     return ico;
@@ -440,10 +437,6 @@ export default function App() {
                 Adjustments & Compression
                 {isAnimated && <span style={{ fontSize: '12px', color: '#4ade80', marginLeft: '8px' }}>• ANIMATED</span>}
               </h2>
-              <h2 className="panel-title">
-                Adjustments & Compression
-                {isAnimated && <span style={{ fontSize: '12px', color: '#4ade80', marginLeft: '8px' }}>• ANIMATED</span>}
-              </h2>
 
               <div className="adjustments-space">
                 <div>
@@ -562,7 +555,6 @@ export default function App() {
                 </button>
                 <button onClick={handleDownload} className="button download-button">
                   <Download className="icon" />
-                  Download {isAnimated ? 'Animated GIF' : `${outputFormat.toUpperCase()}`}
                   Download {isAnimated ? 'Animated GIF' : `${outputFormat.toUpperCase()}`}
                 </button>
               </div>
