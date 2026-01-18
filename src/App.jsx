@@ -17,6 +17,9 @@ export default function App() {
   const [isAnimated, setIsAnimated] = useState(false);
   const [frames, setFrames] = useState([]);
   const [outputFormat, setOutputFormat] = useState('jpeg');
+  const [isAnimated, setIsAnimated] = useState(false);
+  const [frames, setFrames] = useState([]);
+  const [outputFormat, setOutputFormat] = useState('jpeg');
   const canvasRef = useRef(null);
   const originalImageRef = useRef(null);
   const animationFrameRef = useRef(null);
@@ -199,6 +202,7 @@ export default function App() {
   }, [isAnimated, frames, applyColorCorrection]);
 
   useEffect(() => {
+    if (image && !isAnimated && canvasRef.current) {
     if (image && !isAnimated && canvasRef.current) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
@@ -436,6 +440,10 @@ export default function App() {
                 Adjustments & Compression
                 {isAnimated && <span style={{ fontSize: '12px', color: '#4ade80', marginLeft: '8px' }}>• ANIMATED</span>}
               </h2>
+              <h2 className="panel-title">
+                Adjustments & Compression
+                {isAnimated && <span style={{ fontSize: '12px', color: '#4ade80', marginLeft: '8px' }}>• ANIMATED</span>}
+              </h2>
 
               <div className="adjustments-space">
                 <div>
@@ -554,6 +562,7 @@ export default function App() {
                 </button>
                 <button onClick={handleDownload} className="button download-button">
                   <Download className="icon" />
+                  Download {isAnimated ? 'Animated GIF' : `${outputFormat.toUpperCase()}`}
                   Download {isAnimated ? 'Animated GIF' : `${outputFormat.toUpperCase()}`}
                 </button>
               </div>
